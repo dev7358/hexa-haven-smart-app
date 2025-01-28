@@ -6,6 +6,7 @@ import {
   faUtensils,
   faBed,
   faBath,
+  faHome,
 } from '@fortawesome/free-solid-svg-icons';
 
 export function SideNav() {
@@ -13,10 +14,8 @@ export function SideNav() {
   const animatedValue = useRef(new Animated.Value(-60)).current;
 
   const rooms = [
+    {name: 'Home', icon: faHome},
     {name: 'Settings', icon: faCog},
-    {name: 'Kitchen', icon: faUtensils},
-    {name: 'Bedroom', icon: faBed},
-    {name: 'Bathroom', icon: faBath},
   ];
 
   const handlePress = index => {
@@ -30,7 +29,7 @@ export function SideNav() {
   };
 
   return (
-    <View className="h-screen rounded-tr-[20px] w-15 bg-slate-800">
+    <View className="h-screen rounded-tr-[20px] w-16 bg-slate-800">
       <View className="flex items-center gap-y-10 h-4/6 relative">
         <Animated.View
           style={{
@@ -50,7 +49,7 @@ export function SideNav() {
           <TouchableOpacity
             key={index}
             onPress={() => handlePress(index)}
-            className={`w-full flex justify-center items-center gap-y-5 text-sm  pb-5`}
+            className={`w-full flex justify-center items-center gap-y-5 text-sm pb-5`}
             style={{
               height: 100,
             }}>

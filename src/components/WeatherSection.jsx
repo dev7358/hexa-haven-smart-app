@@ -1,122 +1,134 @@
-import React, { useEffect, useState } from "react";
-import { View, Text, Button, ActivityIndicator, Alert } from "react-native";
-import Geolocation from 'react-native-geolocation-service';
+import React, {useState, useEffect} from 'react';
+import {
+  View,
+  Text,
+  Button,
+  PermissionsAndroid,
+  ActivityIndicator,
+} from 'react-native';
+import Geolocation from '@react-native-community/geolocation';
+import {FontAwesomeIcon} from '@fortawesome/react-native-fontawesome';
+import {faThermometerHalf, faTint} from '@fortawesome/free-solid-svg-icons';
 import axios from 'axios';
-import { FontAwesomeIcon } from "@fortawesome/react-native-fontawesome";
-import { faThermometerHalf, faTint } from "@fortawesome/free-solid-svg-icons";
-import { check, request, PERMISSIONS, RESULTS } from 'react-native-permissions';
-
-const WEATHER_API_KEY = "60d3edac42903c48e11867d5b0e797f8";
-const WEATHER_API_URL = "https://api.openweathermap.org/data/2.5/weather";
 
 export function WeatherSection() {
-  const [locationPermission, setLocationPermission] = useState(null);
+  const [location, setLocation] = useState(null);
+  const [permissionGranted, setPermissionGranted] = useState(false);
   const [weatherData, setWeatherData] = useState(null);
-  const [loading, setLoading] = useState(false);
-
-  useEffect(() => {
-    // Check if location permission is granted
-    checkLocationPermission();
-  }, []);
-
-  const checkLocationPermission = async () => {
-    try {
-      const permissionStatus = await check(PERMISSIONS.ANDROID.ACCESS_FINE_LOCATION);
-      if (permissionStatus === RESULTS.GRANTED) {
-        setLocationPermission(true);
-        fetchLocation();
-      } else {
-        setLocationPermission(false);
-      }
-    } catch (error) {
-      console.error(error);
-    }
-  };
+  const [loading, setLoading] = useState(true);
 
   const requestLocationPermission = async () => {
     try {
-      const permissionStatus = await request(PERMISSIONS.ANDROID.ACCESS_FINE_LOCATION);
-      if (permissionStatus === RESULTS.GRANTED) {
-        setLocationPermission(true);
-        fetchLocation();
+      const granted = await PermissionsAndroid.request(
+        PermissionsAndroid.PERMISSIONS.ACCESS_FINE_LOCATION,
+        {
+          title: 'Location Permission',
+          message:
+            'This app needs access to your location to provide weather updates.',
+          buttonNeutral: 'Ask Me Later',
+          buttonNegative: 'Cancel',
+          buttonPositive: 'OK',
+        },
+      );
+
+      if (granted === PermissionsAndroid.RESULTS.GRANTED) {
+        console.log('Location permission granted');
+        setPermissionGranted(true);
+        getCurrentLocation();
       } else {
-        Alert.alert("Location permission is required to fetch weather data.");
+        console.log('Location permission denied');
+        setPermissionGranted(false);
       }
-    } catch (error) {
-      console.error(error);
+    } catch (err) {
+      console.warn(err);
     }
   };
 
-  const fetchLocation = () => {
-    setLoading(true);
-
+  const getCurrentLocation = () => {
     Geolocation.getCurrentPosition(
-      async (position) => {
-        const { latitude, longitude } = position.coords;
+      position => {
+        const {latitude, longitude} = position.coords;
+        setLocation({latitude, longitude});
         fetchWeatherData(latitude, longitude);
       },
-      (error) => {
-        setLoading(false);
-        Alert.alert("Error", "Unable to fetch location.");
-      },
-      { enableHighAccuracy: true, timeout: 15000, maximumAge: 10000 }
+      error => console.error(error),
+      {enableHighAccuracy: true, timeout: 20000, maximumAge: 1000},
     );
   };
 
   const fetchWeatherData = async (latitude, longitude) => {
     try {
-      const response = await axios.get(WEATHER_API_URL, {
-        params: {
-          lat: latitude,
-          lon: longitude,
-          appid: WEATHER_API_KEY,
-          units: "metric",
-        },
-      });
-
+      const API_KEY = '60d3edac42903c48e11867d5b0e797f8';
+      const response = await axios.get(
+        `https://api.openweathermap.org/data/2.5/weather?lat=${latitude}&lon=${longitude}&units=metric&appid=${API_KEY}`,
+      );
       setWeatherData(response.data);
       setLoading(false);
     } catch (error) {
+      console.error('Error fetching weather data:', error);
       setLoading(false);
-      Alert.alert("Error", "Unable to fetch weather data.");
     }
   };
 
-  if (loading) {
-    return (
-      <View className="flex-row justify-between bg-white rounded-2xl p-6 mb-8" style={{ shadowColor: "#000", shadowOffset: { width: 0, height: 1 }, shadowOpacity: 0.2, shadowRadius: 3 }}>
-        <ActivityIndicator size="large" color="gray" />
-      </View>
-    );
-  }
-
-  if (locationPermission === false) {
-    return (
-      <View className="flex-col items-center bg-white rounded-2xl p-6 mb-8" style={{ shadowColor: "#000", shadowOffset: { width: 0, height: 1 }, shadowOpacity: 0.2, shadowRadius: 3 }}>
-        <Text className="text-gray-800 text-lg font-semibold">Location permission is required</Text>
-        <Button title="Allow Permission" onPress={requestLocationPermission} />
-      </View>
-    );
-  }
-
-  if (!weatherData) {
-    return (
-      <View className="flex-row justify-center bg-white rounded-2xl p-6 mb-8" style={{ shadowColor: "#000", shadowOffset: { width: 0, height: 1 }, shadowOpacity: 0.2, shadowRadius: 3 }}>
-        <Text className="text-gray-800 text-lg font-semibold">Unable to fetch weather data</Text>
-      </View>
-    );
-  }
+  useEffect(() => {
+    requestLocationPermission();
+  }, []);
 
   return (
-    <View className="flex-row justify-between bg-white rounded-2xl p-6 mb-8" style={{ shadowColor: "#000", shadowOffset: { width: 0, height: 1 }, shadowOpacity: 0.2, shadowRadius: 3 }}>
-      <View className="flex-row items-center space-x-2">
-        <FontAwesomeIcon icon={faThermometerHalf} size={20} color="gray" />
-        <Text className="text-gray-800 text-lg font-semibold">{weatherData.main.temp}°C</Text>
-      </View>
-      <View className="flex-row items-center space-x-2">
-        <FontAwesomeIcon icon={faTint} size={20} color="gray" />
-        <Text className="text-gray-800 text-lg font-semibold">{weatherData.main.humidity}%</Text>
-      </View>
+    <View
+      className="flex-row justify-between bg-white rounded-2xl p-6 mb-8"
+      style={{
+        shadowColor: '#000',
+        shadowOffset: {width: 0, height: 1},
+        shadowOpacity: 0.2,
+        shadowRadius: 3,
+      }}>
+      {!permissionGranted ? (
+        <Button title="ALLOW Permission" onPress={requestLocationPermission} />
+      ) : loading ? (
+        <>
+        <View className="flex flex-row justify-between bg-[--transition-hexa-blue] rounded-2xl p-6 w-full">
+            <View className="flex-row items-center gap-2 space-x-2">
+              <View className="bg-[--hexa-blue] w-6 h-6 rounded-full" />
+              <View className="bg-[--hexa-blue] w-20 h-6 rounded-md" />
+            </View>
+            <View className="flex-row items-center gap-2 space-x-2">
+              <View className="bg-[--hexa-blue] w-6 h-6 rounded-full" />
+              <View className="bg-[--hexa-blue] w-20 h-6 rounded-md" />
+            </View>
+          </View>
+        </>
+      ) : weatherData ? (
+        <>
+          <View className="flex-row items-center gap-2 space-x-2">
+            <FontAwesomeIcon
+              icon={faThermometerHalf}
+              size={25}
+              color="#ff8625"
+            />
+            <View>
+              <Text className="text-xs">Temperature</Text>
+              <Text className="text-gray-800 text-lg font-semibold">
+                {weatherData.main.temp}°C
+              </Text>
+            </View>
+          </View>
+          <View className="border-r-2 border-gray-400"></View>
+          <View className="flex-row items-center gap-2 space-x-2">
+            <FontAwesomeIcon icon={faTint} size={25} color="#84c3e0" />
+            <View>
+              <Text className="text-xs">Humidity</Text>
+              <Text className="text-gray-800 text-lg font-semibold">
+                {weatherData.main.humidity}%
+              </Text>
+            </View>
+          </View>
+        </>
+      ) : (
+        <Text className="text-gray-800 text-lg font-semibold">
+          Error loading weather data
+        </Text>
+      )}
     </View>
   );
 }
