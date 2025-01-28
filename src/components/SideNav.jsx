@@ -49,7 +49,7 @@ export function SideNav() {
           <TouchableOpacity
             key={index}
             onPress={() => handlePress(index)}
-            className={`w-full flex justify-center items-center gap-y-5 text-sm pb-5`}
+            className="w-full flex justify-center items-center gap-y-5 text-sm pb-5"
             style={{
               height: 100,
             }}>
