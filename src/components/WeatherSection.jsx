@@ -4,7 +4,6 @@ import {
   Text,
   Button,
   PermissionsAndroid,
-  ActivityIndicator,
 } from 'react-native';
 import Geolocation from '@react-native-community/geolocation';
 import {FontAwesomeIcon} from '@fortawesome/react-native-fontawesome';
@@ -71,7 +70,9 @@ export function WeatherSection() {
   };
 
   useEffect(() => {
-    requestLocationPermission();
+    setTimeout(() => {
+      requestLocationPermission();
+    }, 1000);
   }, []);
 
   return (
