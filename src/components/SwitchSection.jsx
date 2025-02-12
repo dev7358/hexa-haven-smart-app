@@ -122,7 +122,7 @@ export default function SwitchSection() {
                   className="w-[48%] mb-2">
                   <TouchableOpacity
                     onPress={() =>
-                      navigation.navigate('HexaDevices', {title: cardName})
+                      navigation.navigate('HexaDevices', {title: cardName, deviceId: device.id })
                     }
                     activeOpacity={0.8}
                     className="bg-white rounded-xl shadow-xl pb-3">
