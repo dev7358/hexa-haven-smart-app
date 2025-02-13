@@ -76,6 +76,15 @@ export default function Routes() {
           ),
         })}
       />
+      <Stack.Screen
+        name="HexaEditProfile"
+        component={Components.HexaEditProfile}
+        options={({ route }) => ({
+          header: () => (
+            <CustomHeader title={route.params?.title || route.name} showBackButton={true} />
+          ),
+        })}
+      />
     </Stack.Navigator>
   );
 }
