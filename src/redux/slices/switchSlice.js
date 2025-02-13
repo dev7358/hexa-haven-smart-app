@@ -34,17 +34,18 @@ const switchSlice = createSlice({
       );
     },
     updateDevice: (state, action) => {
-      const { id, switches } = action.payload;
+      const { id, switches, regulators } = action.payload;
       const device = state.activeDevices.find((device) => device.id === id);
       if (device) {
-        device.switches = switches;
+        if (switches) device.switches = switches;
+        if (regulators) device.regulators = regulators;
       }
     },
     updateCardName: (state, action) => {
       const { id, name } = action.payload;
       const card = state.cardNames.find((card) => card.id === id);
       if (card) {
-        card.name = name; // Update the card name
+        card.name = name;
       }
     },
   },
