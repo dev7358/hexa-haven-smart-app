@@ -1,4 +1,4 @@
-import { configureStore } from '@reduxjs/toolkit';
+import {configureStore} from '@reduxjs/toolkit';
 import switchReducer from './slices/switchSlice';
 import profileReducer from './slices/profileSlice';
 

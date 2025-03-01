@@ -6,6 +6,9 @@ const initialState = {
   email: 'john@figma.com',
   phone: '9874563210',
   dob: '1995-08-16',
+  darkMode: false,
+  newPassword: '',
+  confirmPassword: '',
 };
 
 const profileSlice = createSlice({
@@ -15,8 +18,11 @@ const profileSlice = createSlice({
     updateProfile: (state, action) => {
       return {...state, ...action.payload};
     },
+    toggleDarkMode: state => {
+      state.darkMode = !state.darkMode;
+    },
   },
 });
 
-export const {updateProfile} = profileSlice.actions;
+export const {updateProfile, toggleDarkMode} = profileSlice.actions;
 export default profileSlice.reducer;

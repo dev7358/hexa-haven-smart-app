@@ -19,6 +19,7 @@ import {
   faEnvelope,
   faPhone,
   faCalendar,
+  faLock,
 } from '@fortawesome/free-solid-svg-icons';
 import Animated, {
   useSharedValue,
@@ -169,6 +170,44 @@ export default function HexaEditProfile() {
             )}
           </View>
         </View>
+
+        {/* New Password Field */}
+        {isEditing && (
+          <View className="flex-row items-center gap-x-4 mb-4 border-b pb-2 border-gray-200">
+            <FontAwesomeIcon icon={faLock} size={18} color="#4A90E2" />
+            <View className="flex-1">
+              <Text className="text-gray-500 font-semibold">New Password</Text>
+              <TextInput
+                className="border border-gray-300 p-3 rounded-md mt-1 text-lg w-full"
+                style={{minHeight: 40}}
+                numberOfLines={1}
+                secureTextEntry={true}
+                value={formData.newPassword}
+                onChangeText={text => handleChange('newPassword', text)}
+              />
+            </View>
+          </View>
+        )}
+
+        {/* Confirm Password Field */}
+        {isEditing && (
+          <View className="flex-row items-center gap-x-4 mb-4 border-b pb-2 border-gray-200">
+            <FontAwesomeIcon icon={faLock} size={18} color="#4A90E2" />
+            <View className="flex-1">
+              <Text className="text-gray-500 font-semibold">
+                Confirm Password
+              </Text>
+              <TextInput
+                className="border border-gray-300 p-3 rounded-md mt-1 text-lg w-full"
+                style={{minHeight: 40}}
+                numberOfLines={1}
+                secureTextEntry={true}
+                value={formData.confirmPassword}
+                onChangeText={text => handleChange('confirmPassword', text)}
+              />
+            </View>
+          </View>
+        )}
       </View>
 
       {/* Date Picker Modal */}
@@ -196,7 +235,7 @@ export default function HexaEditProfile() {
           />
         </Animated.View>
         <Text className="text-white font-bold text-lg">
-          {isEditing ? 'Save Changes' : 'Edit Profile'}
+          {isEditing ? 'Save' : 'Edit Profile'}
         </Text>
       </TouchableOpacity>
     </Animated.View>
