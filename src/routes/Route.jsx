@@ -83,6 +83,15 @@ export default function Routes() {
         })}
         initialParams={{ deviceId: null }}
       />
+      <Stack.Screen
+        name="HexaEditProfile"
+        component={Components.HexaEditProfile}
+        options={({ route }) => ({
+          header: () => (
+            <CustomHeader title={route.params?.title || route.name} showBackButton={true} />
+          ),
+        })}
+      />
     </Stack.Navigator>
   );
 }
