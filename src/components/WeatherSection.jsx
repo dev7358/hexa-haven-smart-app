@@ -4,7 +4,6 @@ import {
   Text,
   Button,
   PermissionsAndroid,
-  ActivityIndicator,
 } from 'react-native';
 import Geolocation from '@react-native-community/geolocation';
 import {FontAwesomeIcon} from '@fortawesome/react-native-fontawesome';
@@ -71,12 +70,14 @@ export function WeatherSection() {
   };
 
   useEffect(() => {
-    requestLocationPermission();
+    setTimeout(() => {
+      requestLocationPermission();
+    }, 1000);
   }, []);
 
   return (
     <View
-      className="flex-row justify-between bg-white rounded-2xl p-6 mb-8"
+      className={`flex-row bg-white rounded-2xl p-6 mb-8 ${!permissionGranted ? 'justify-center' : 'justify-between'}`}
       style={{
         shadowColor: '#000',
         shadowOffset: {width: 0, height: 1},
@@ -84,7 +85,7 @@ export function WeatherSection() {
         shadowRadius: 3,
       }}>
       {!permissionGranted ? (
-        <Button title="ALLOW Permission" onPress={requestLocationPermission} />
+        <Button title="Allow Permission"  onPress={requestLocationPermission} />
       ) : loading ? (
         <>
         <View className="flex flex-row justify-between bg-[--transition-hexa-blue] rounded-2xl p-6 w-full">
