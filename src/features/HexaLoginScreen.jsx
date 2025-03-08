@@ -48,7 +48,7 @@ const LoginScreen = ({navigation}) => {
                 <FontAwesomeIcon
                   icon={faEnvelope}
                   size={20}
-                  className="mr-2 text-white"
+                  className="mr-4 text-white"
                 />
                 <TextInput
                   placeholder="Email Address"
@@ -70,7 +70,7 @@ const LoginScreen = ({navigation}) => {
                 <FontAwesomeIcon
                   icon={faLock}
                   size={20}
-                  className="mr-2 text-white"
+                  className="mr-4 text-white"
                 />
                 <TextInput
                   placeholder="Password"
