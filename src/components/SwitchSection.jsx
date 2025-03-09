@@ -3,9 +3,10 @@ import {
   View,
   Text,
   TouchableOpacity,
-  ScrollView,
   TextInput,
-  Button,
+  PermissionsAndroid,
+  Platform,
+  Alert,
 } from 'react-native';
 import {useDispatch, useSelector} from 'react-redux';
 import {FontAwesomeIcon} from '@fortawesome/react-native-fontawesome';
@@ -14,7 +15,6 @@ import {
   faToggleOn,
   faXmark,
   faToggleOff,
-  faEdit,
 } from '@fortawesome/free-solid-svg-icons';
 import {
   addDevice,
@@ -25,6 +25,9 @@ import {
 import DeviceDetectorLoader from './DeviceDetectorLoader';
 import Animated, {FadeIn, SlideInRight, ZoomIn} from 'react-native-reanimated';
 import {useNavigation} from '@react-navigation/native';
+import WifiManager from 'react-native-wifi-reborn';
+import {BleManager} from 'react-native-ble-plx';
+const bleManager = new BleManager();
 
 export default function SwitchSection() {
   const dispatch = useDispatch();
@@ -48,6 +51,8 @@ export default function SwitchSection() {
   const navigation = useNavigation();
 
   const handleAddChannel = () => {
+    requestPermissions();
+    scanWiFi();
     setIsRotating(true);
   };
 
@@ -82,6 +87,51 @@ export default function SwitchSection() {
     dispatch(updateCardName({id: deviceId, name}));
   };
 
+  const scanWiFi = async () => {
+    try {
+      await WifiManager.loadWifiList();
+    } catch (error) {
+      console.error('Wi-Fi scan error:', error);
+    }
+  };
+
+  const requestPermissions = async () => {
+    if (Platform.OS === 'android') {
+      try {
+        const granted = await PermissionsAndroid.requestMultiple([
+          PermissionsAndroid.PERMISSIONS.BLUETOOTH_SCAN,
+          PermissionsAndroid.PERMISSIONS.BLUETOOTH_CONNECT,
+          PermissionsAndroid.PERMISSIONS.ACCESS_FINE_LOCATION,
+        ]);
+
+        if (
+          granted['android.permission.BLUETOOTH_SCAN'] ===
+            PermissionsAndroid.RESULTS.GRANTED &&
+          granted['android.permission.BLUETOOTH_CONNECT'] ===
+            PermissionsAndroid.RESULTS.GRANTED &&
+          granted['android.permission.ACCESS_FINE_LOCATION'] ===
+            PermissionsAndroid.RESULTS.GRANTED
+        ) {
+          console.log('Bluetooth & Location permissions granted');
+
+          // Check if Bluetooth is ON
+          const state = await bleManager.state();
+          if (state !== 'PoweredOn') {
+            Alert.alert(
+              'Bluetooth is Off',
+              'Please enable Bluetooth to scan for devices.',
+              [{text: 'OK'}],
+            );
+          }
+        } else {
+          console.log('Permissions denied');
+        }
+      } catch (error) {
+        console.error('Permission error:', error);
+      }
+    }
+  };
+
   return (
     <View>
       {/* Add Channel Button */}
@@ -113,20 +163,23 @@ export default function SwitchSection() {
           </Text>
           <View className="flex flex-wrap flex-row justify-between gap-2">
             {activeDevices.map(device => {
-              const cardName =
-                cardNames.find(card => card.id === device.id)?.name;
+              const cardName = cardNames.find(
+                card => card.id === device.id,
+              )?.name;
               return (
-                <Animated.View
+                <TouchableOpacity
                   key={device.id}
-                  entering={SlideInRight.delay(200)}
+                  onPress={() =>
+                    navigation.navigate('HexaDevices', {
+                      title: cardName,
+                      deviceId: device.id,
+                    })
+                  }
+                  activeOpacity={0.8}
                   className="w-[48%] mb-2">
-                  <TouchableOpacity
-                    onPress={() =>
-                      navigation.navigate('HexaDevices', {title: cardName, deviceId: device.id })
-                    }
-                    activeOpacity={0.8}
+                  <Animated.View
+                    entering={SlideInRight.delay(200)}
                     className="bg-white rounded-xl shadow-xl pb-3">
-
                     {/* X Button to Remove Card */}
                     <TouchableOpacity
                       className="absolute -top-2 -right-2 p-1 bg-[#ff8625] rounded-full"
@@ -135,14 +188,14 @@ export default function SwitchSection() {
                     </TouchableOpacity>
 
                     {/* Editable Card Name */}
-                      <TextInput
-                        className="font-bold text-xl text-blue-900 mx-3 pt-2"
-                        numberOfLines={1}
-                        defaultValue={cardName}
-                        onChangeText={text =>
-                          handleUpdateCardName(device.id, text)
-                        }
-                      />
+                    <TextInput
+                      className="font-bold text-xl text-blue-900 mx-3 pt-2"
+                      numberOfLines={1}
+                      defaultValue={cardName}
+                      onChangeText={text =>
+                        handleUpdateCardName(device.id, text)
+                      }
+                    />
 
                     {/* Switches */}
                     {device.switches.map((sw, idx) => (
@@ -160,8 +213,8 @@ export default function SwitchSection() {
                         </Text>
                       </TouchableOpacity>
                     ))}
-                  </TouchableOpacity>
-                </Animated.View>
+                  </Animated.View>
+                </TouchableOpacity>
               );
             })}
           </View>
@@ -174,26 +227,26 @@ export default function SwitchSection() {
           Manual Setup
         </Text>
         {manualSwitches.map(switchItem => (
-          <Animated.View
-            key={switchItem.id}
-            entering={ZoomIn.delay(100)}
-            className="mb-4">
+          <View key={switchItem.id} className="mb-4">
             <TouchableOpacity
-              className="bg-white rounded-2xl p-5 shadow-xl flex-row justify-between items-center"
               onPress={() => handleAddManualSwitch(switchItem)}
               activeOpacity={0.8}>
-              <View>
-                <Text className="text-[#ff8625] font-bold text-lg">
-                  {switchItem.type}
-                </Text>
-                <Text className="text-[#1a365d] mt-1">
-                  {switchItem.switches.length} switches •{' '}
-                  {switchItem.regulators?.length || 0} regulators
-                </Text>
-              </View>
-              <FontAwesomeIcon icon={faPlus} size={20} color="#84c3e0" />
+              <Animated.View
+                className="bg-white rounded-2xl p-5 shadow-xl flex-row justify-between items-center"
+                entering={ZoomIn.delay(100)}>
+                <View>
+                  <Text className="text-[#ff8625] font-bold text-lg">
+                    {switchItem.type}
+                  </Text>
+                  <Text className="text-[#1a365d] mt-1">
+                    {switchItem.switches.length} switches •{' '}
+                    {switchItem.regulators?.length || 0} regulators
+                  </Text>
+                </View>
+                <FontAwesomeIcon icon={faPlus} size={20} color="#84c3e0" />
+              </Animated.View>
             </TouchableOpacity>
-          </Animated.View>
+          </View>
         ))}
       </View>
     </View>

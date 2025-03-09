@@ -46,7 +46,7 @@ const WelcomeScreen = ({navigation}) => {
       <Animated.View
         style={{opacity: fadeAnim, transform: [{translateY: slideAnim}]}}>
         <Image
-          source={require('../assets/images/welcome-bg.jpg')} // Add your image in the assets folder
+          source={require('../assets/images/welcome-bg.jpg')}
           className="w-64 h-64 mb-8"
         />
         <Text className="text-3xl font-bold mb-2 text-white">
@@ -59,7 +59,7 @@ const WelcomeScreen = ({navigation}) => {
         <TouchableOpacity
           onPress={handleLogout}
           className="bg-white py-3 px-6 rounded-lg shadow-md">
-          <Text className="text-blue-600 text-lg font-semibold">Log Out</Text>
+          <Text className="text-blue-600 text-lg font-semibold">Log In</Text>
         </TouchableOpacity>
       </Animated.View>
     </LinearGradient>
