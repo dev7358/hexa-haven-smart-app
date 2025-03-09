@@ -1,13 +1,6 @@
+import React, {useState, useEffect} from 'react';
+import {View, Text, TouchableOpacity, ScrollView} from 'react-native';
 import {useNavigation, useRoute} from '@react-navigation/native';
-import {
-  View,
-  Text,
-  TouchableOpacity,
-  TextInput,
-  Alert,
-  ScrollView,
-} from 'react-native';
-import {useEffect, useState} from 'react';
 import {useSelector, useDispatch} from 'react-redux';
 import {FontAwesomeIcon} from '@fortawesome/react-native-fontawesome';
 import {
@@ -25,25 +18,31 @@ import Animated, {
   withTiming,
   Easing,
 } from 'react-native-reanimated';
-import {updateDevice} from '../redux/slices/switchSlice';
 import Slider from '@react-native-community/slider';
+import TimePickerModal from '../components/TimePickerModal';
+import {
+  updateDevice,
+  setTimer,
+  decrementTimer,
+  resetTimer,
+} from '../redux/slices/switchSlice';
 
 export default function HexaDevices() {
   const navigation = useNavigation();
   const route = useRoute();
   const dispatch = useDispatch();
+
   const selectedDevice = useSelector(state =>
     state.switches.activeDevices.find(
       device => device.id === Number(route.params.deviceId),
     ),
   );
 
+  const timers = useSelector(
+    state => state.switches.timers[selectedDevice?.id] || {},
+  );
+
   const [mainToggle, setMainToggle] = useState(false);
-  const [hours, setHours] = useState('');
-  const [minutes, setMinutes] = useState('');
-  const [amPm, setAmPm] = useState('AM');
-  const [timer, setTimer] = useState(null);
-  const [timeLeft, setTimeLeft] = useState(0);
   const [switchStates, setSwitchStates] = useState(
     selectedDevice?.switches || [],
   );
@@ -53,8 +52,9 @@ export default function HexaDevices() {
   const [fanSpeeds, setFanSpeeds] = useState(
     selectedDevice?.regulators.map(() => 0) || [],
   );
+  const [modalVisible, setModalVisible] = useState(false);
+  const [selectedSwitchIndex, setSelectedSwitchIndex] = useState(null);
 
-  // Pre-allocate Hooks for up to 6 regulators
   const fanRotations = [
     useSharedValue(0),
     useSharedValue(0),
@@ -70,34 +70,73 @@ export default function HexaDevices() {
     })),
   );
 
+  // Timer countdown logic
   useEffect(() => {
-    if (timeLeft > 0) {
-      const interval = setInterval(() => {
-        setTimeLeft(prev => prev - 1);
-      }, 1000);
-      return () => clearInterval(interval);
-    } else if (timeLeft === 0 && timer) {
-      // Timer hits zero, turn off all toggles
-      setMainToggle(false);
-      setSwitchStates(switchStates.map(() => false));
-      setCheckedStates(checkedStates.map(() => false));
-      setFanSpeeds(fanSpeeds.map(() => 0));
-      fanRotations.forEach(rotation => {
-        rotation.value = withTiming(0, {duration: 500, easing: Easing.linear});
+    const interval = setInterval(() => {
+      Object.keys(timers).forEach(switchIndex => {
+        if (timers[switchIndex] > 0) {
+          dispatch(decrementTimer({deviceId: selectedDevice.id, switchIndex}));
+        } else if (timers[switchIndex] === 0) {
+          // Call handleTimerEnd only once when the timer reaches 0
+          handleTimerEnd(Number(switchIndex));
+          dispatch(resetTimer({deviceId: selectedDevice.id, switchIndex})); // Reset the timer in Redux
+        }
       });
-      setTimer(null);
+    }, 1000);
+
+    return () => clearInterval(interval); // Cleanup the interval on unmount
+  }, [timers, selectedDevice?.id]); // Add selectedDevice?.id to dependencies
+
+  const handleTimerEnd = switchIndex => {
+    console.log(`Timer ended for switch ${switchIndex}`);
+    const newSwitchStates = [...switchStates];
+    newSwitchStates[switchIndex] = false; // Turn off only the respective toggle
+    console.log(`Updated switch states:`, newSwitchStates);
+    setSwitchStates(newSwitchStates);
+
+    // If it's a fan, also reset its speed
+    if (selectedDevice?.regulators.length > switchIndex) {
+      const newFanSpeeds = [...fanSpeeds];
+      newFanSpeeds[switchIndex] = 0;
+      setFanSpeeds(newFanSpeeds);
+      fanRotations[switchIndex].value = withTiming(0, {
+        duration: 500,
+        easing: Easing.linear,
+      });
     }
-  }, [timeLeft]);
+
+    // Update the device state in Redux
+    dispatch(updateDevice({id: selectedDevice.id, switches: newSwitchStates}));
+  };
+
+  const handleScheduleTimer = (switchIndex, timeLeft) => {
+    dispatch(setTimer({deviceId: selectedDevice.id, switchIndex, timeLeft}));
+  };
+
+  const handleOpenModal = index => {
+    setSelectedSwitchIndex(index);
+    setModalVisible(true);
+  };
+
+  const handleCloseModal = () => {
+    setModalVisible(false);
+  };
 
   const handleToggleMain = () => {
-    setMainToggle(!mainToggle);
+    setMainToggle(prev => !prev); // Toggle the state
   };
 
   const handleToggleSwitch = index => {
     const newSwitchStates = [...switchStates];
-    newSwitchStates[index] = !newSwitchStates[index];
+    newSwitchStates[index] = !newSwitchStates[index]; // Toggle the switch state
     setSwitchStates(newSwitchStates);
 
+    // If the toggle is turned off manually, reset its timer
+    if (!newSwitchStates[index]) {
+      dispatch(resetTimer({deviceId: selectedDevice.id, switchIndex: index}));
+    }
+
+    // If it's a fan, reset its speed when turned off
     if (selectedDevice?.regulators.length > index && !newSwitchStates[index]) {
       const newFanSpeeds = [...fanSpeeds];
       newFanSpeeds[index] = 0;
@@ -108,6 +147,7 @@ export default function HexaDevices() {
       });
     }
 
+    // Update the device state in Redux
     dispatch(updateDevice({id: selectedDevice.id, switches: newSwitchStates}));
   };
 
@@ -140,47 +180,6 @@ export default function HexaDevices() {
     dispatch(updateDevice({id: selectedDevice.id, regulators: newFanSpeeds}));
   };
 
-  const handleStartScheduling = () => {
-    const hrs = parseInt(hours, 10);
-    const mins = parseInt(minutes, 10);
-
-    if (
-      isNaN(hrs) ||
-      isNaN(mins) ||
-      hrs < 1 ||
-      hrs > 12 ||
-      mins < 0 ||
-      mins > 59
-    ) {
-      Alert.alert(
-        'Invalid Time',
-        'Please enter valid hours (1-12) and minutes (0-59).',
-      );
-      return;
-    }
-
-    let scheduledHours = hrs;
-    if (amPm === 'PM' && hrs !== 12) scheduledHours += 12;
-    if (amPm === 'AM' && hrs === 12) scheduledHours = 0;
-
-    const now = new Date();
-    const scheduledDate = new Date(
-      now.getFullYear(),
-      now.getMonth(),
-      now.getDate(),
-      scheduledHours,
-      mins,
-    );
-
-    const timeout = scheduledDate.getTime() - now.getTime();
-    if (timeout > 0) {
-      setTimeLeft(Math.floor(timeout / 1000));
-      setTimer(timeout);
-    } else {
-      Alert.alert('Invalid Time', 'The scheduled time must be in the future.');
-    }
-  };
-
   const formatTime = seconds => {
     const hrs = Math.floor(seconds / 3600);
     const mins = Math.floor((seconds % 3600) / 60);
@@ -188,11 +187,6 @@ export default function HexaDevices() {
     return `${hrs.toString().padStart(2, '0')}:${mins
       .toString()
       .padStart(2, '0')}:${secs.toString().padStart(2, '0')}`;
-  };
-
-  const handleNumericInput = (text, setter) => {
-    const cleanedText = text.replace(/[^0-9]/g, '');
-    setter(cleanedText);
   };
 
   return (
@@ -213,52 +207,6 @@ export default function HexaDevices() {
         </TouchableOpacity>
       </View>
 
-      {/* Schedule Time */}
-      <View className="bg-white p-4 rounded-xl shadow-sm mb-4">
-        <View className="flex-row items-center mb-4">
-          <FontAwesomeIcon icon={faClock} size={20} color="#4A5568" />
-          <Text className="text-lg font-semibold text-gray-800 ml-2">
-            Schedule Off
-          </Text>
-        </View>
-        <View className="flex-row justify-between mb-4">
-          <TextInput
-            className="flex-1 border border-gray-200 rounded-lg p-2 mr-2 text-center text-gray-800"
-            placeholder="HH"
-            keyboardType="numeric"
-            value={hours}
-            onChangeText={text => handleNumericInput(text, setHours)}
-            maxLength={2}
-          />
-          <TextInput
-            className="flex-1 border border-gray-200 rounded-lg p-2 mx-2 text-center text-gray-800"
-            placeholder="MM"
-            keyboardType="numeric"
-            value={minutes}
-            onChangeText={text => handleNumericInput(text, setMinutes)}
-            maxLength={2}
-          />
-          <TouchableOpacity
-            className="bg-[#84c3e0] p-2 rounded-lg"
-            onPress={() => setAmPm(prev => (prev === 'AM' ? 'PM' : 'AM'))}>
-            <Text className="text-white font-semibold">{amPm}</Text>
-          </TouchableOpacity>
-        </View>
-        <TouchableOpacity
-          className="bg-[#84c3e0] p-3 rounded-lg items-center"
-          onPress={handleStartScheduling}>
-          <Text className="text-white font-semibold">Start Scheduling</Text>
-        </TouchableOpacity>
-        {timer !== null && (
-          <View className="mt-4 items-center">
-            <Text className="text-gray-800">Time Left:</Text>
-            <Text className="text-2xl font-bold text-gray-800">
-              {formatTime(timeLeft)}
-            </Text>
-          </View>
-        )}
-      </View>
-
       {/* Switch Cards */}
       <View className="flex-row flex-wrap justify-between">
         {selectedDevice?.switches.map((sw, idx) => (
@@ -271,15 +219,29 @@ export default function HexaDevices() {
                   ? `Fan ${idx + 1}`
                   : `Switch ${idx + 1}`}
               </Text>
-              <TouchableOpacity
-                onPress={() => handleToggleCheckbox(idx)}
-                disabled={!mainToggle}>
-                <FontAwesomeIcon
-                  icon={checkedStates[idx] ? faCheckSquare : faSquare}
-                  size={20}
-                  color={checkedStates[idx] && mainToggle ? '#84c3e0' : '#ccc'}
-                />
-              </TouchableOpacity>
+              <View className="flex-row items-center">
+                <TouchableOpacity
+                  onPress={() => handleOpenModal(idx)}
+                  disabled={!switchStates[idx]} // Disable if toggle is off
+                  className="mr-2">
+                  <FontAwesomeIcon
+                    icon={faClock}
+                    size={20}
+                    color={switchStates[idx] ? '#4A5568' : '#ccc'} // Gray out if disabled
+                  />
+                </TouchableOpacity>
+                <TouchableOpacity
+                  onPress={() => handleToggleCheckbox(idx)}
+                  disabled={!mainToggle}>
+                  <FontAwesomeIcon
+                    icon={checkedStates[idx] ? faCheckSquare : faSquare}
+                    size={20}
+                    color={
+                      checkedStates[idx] && mainToggle ? '#84c3e0' : '#ccc'
+                    }
+                  />
+                </TouchableOpacity>
+              </View>
             </View>
             <TouchableOpacity
               onPress={() => handleToggleSwitch(idx)}
@@ -326,9 +288,28 @@ export default function HexaDevices() {
                 </Animated.View>
               </View>
             )}
+
+            {/* Timer Display */}
+            {timers[idx] > 0 && (
+              <View className="mt-4 items-center">
+                <Text className="text-gray-800">Time Left:</Text>
+                <Text className="text-2xl font-bold text-gray-800">
+                  {formatTime(timers[idx])}
+                </Text>
+              </View>
+            )}
           </View>
         ))}
       </View>
+
+      {/* Time Picker Modal */}
+      <TimePickerModal
+        visible={modalVisible}
+        onClose={handleCloseModal}
+        onSchedule={timeLeft =>
+          handleScheduleTimer(selectedSwitchIndex, timeLeft)
+        }
+      />
     </ScrollView>
   );
 }
