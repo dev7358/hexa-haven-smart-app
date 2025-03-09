@@ -1,16 +1,17 @@
 import React from 'react';
 import {createNativeStackNavigator} from '@react-navigation/native-stack';
-import {TouchableOpacity, Text, View, StatusBar} from 'react-native';
+import {TouchableOpacity, Text, StatusBar} from 'react-native';
 import {useNavigation} from '@react-navigation/native';
 import {FontAwesomeIcon} from '@fortawesome/react-native-fontawesome';
 import {faChevronLeft} from '@fortawesome/free-solid-svg-icons';
 import LinearGradient from 'react-native-linear-gradient';
 import * as Components from '../imports/imports';
 import Animated, {SlideInUp} from 'react-native-reanimated';
+import {useSelector} from 'react-redux';
 
 const Stack = createNativeStackNavigator();
 
-const CustomBackButton = () => {
+const CustomBackButton = React.memo(() => {
   const navigation = useNavigation();
   return (
     <TouchableOpacity
@@ -23,9 +24,20 @@ const CustomBackButton = () => {
       <FontAwesomeIcon icon={faChevronLeft} size={22} color="#fff" />
     </TouchableOpacity>
   );
-};
+});
 
 const CustomHeader = ({title, showBackButton}) => {
+  const mainToggleTimer = useSelector(state => state.switches.mainToggleTimer);
+
+  const formatTime = seconds => {
+    const hrs = Math.floor(seconds / 3600);
+    const mins = Math.floor((seconds % 3600) / 60);
+    const secs = seconds % 60;
+    return `${hrs.toString().padStart(2, '0')}:${mins
+      .toString()
+      .padStart(2, '0')}:${secs.toString().padStart(2, '0')}`;
+  };
+
   return (
     <>
       <StatusBar backgroundColor="#84c3e0" barStyle="light-content" />
@@ -35,9 +47,16 @@ const CustomHeader = ({title, showBackButton}) => {
         className="h-[70px] flex-row items-start px-5 pb-10 pt-4">
         {showBackButton && <CustomBackButton />}
         <Animated.View entering={SlideInUp.delay(150)} className="flex-1">
-          <Text className="text-white text-2xl font-bold text-center">
+          <Text className="text-white text-xl font-bold text-center">
             {title}
           </Text>
+          {mainToggleTimer > 0 && (
+            <Animated.View entering={SlideInUp.delay(150)} className="ml-2">
+              <Text className="text-white text-lg font-semibold text-center">
+                {formatTime(mainToggleTimer)}
+              </Text>
+            </Animated.View>
+          )}
         </Animated.View>
       </LinearGradient>
     </>
