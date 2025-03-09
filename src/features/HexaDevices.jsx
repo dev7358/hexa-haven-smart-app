@@ -26,6 +26,7 @@ import Animated, {
   Easing,
 } from 'react-native-reanimated';
 import {updateDevice} from '../redux/slices/switchSlice';
+import Slider from '@react-native-community/slider';
 
 export default function HexaDevices() {
   const navigation = useNavigation();
@@ -195,7 +196,7 @@ export default function HexaDevices() {
   };
 
   return (
-    <ScrollView className="flex-1 bg-gray-50 p-4">
+    <ScrollView className="flex-1 p-4 mb-2">
       {/* Main Toggle */}
       <View className="flex-row justify-between items-center bg-white p-4 rounded-xl shadow-sm mb-4">
         <Text className="text-lg font-semibold text-gray-800">
@@ -263,7 +264,7 @@ export default function HexaDevices() {
         {selectedDevice?.switches.map((sw, idx) => (
           <View
             key={idx}
-            className="w-[48%] bg-white p-4 rounded-xl shadow-sm mb-4">
+            className="w-[100%] bg-white p-4 rounded-xl shadow-sm mb-4">
             <View className="flex-row justify-between items-center">
               <Text className="text-lg font-semibold text-gray-800">
                 {selectedDevice?.regulators.length > idx
@@ -292,46 +293,31 @@ export default function HexaDevices() {
 
             {/* Fan or Light Icon */}
             {selectedDevice?.regulators.length > idx ? (
-              <View className="items-center mt-4">
-                <View className="relative w-32 h-32">
-                  <Animated.View
-                    style={[animatedFanStyles[idx]]}
-                    className="absolute flex justify-center items-center inset-0">
-                    <FontAwesomeIcon
-                      icon={faFan}
-                      size={50}
-                      color={switchStates[idx] ? '#84c3e0' : '#ccc'}
-                    />
-                  </Animated.View>
-                  {Array.from({length: 6}, (_, i) => i + 1).map(
-                    (speed, index) => {
-                      const angle = index * (360 / 6) - 90;
-                      const x = 40 + 50 * Math.cos((angle * Math.PI) / 180);
-                      const y = 40 + 50 * Math.sin((angle * Math.PI) / 180);
-                      return (
-                        <TouchableOpacity
-                          key={speed}
-                          className="absolute"
-                          style={{left: x, top: y}}
-                          onPress={() => handleFanSpeedChange(idx, speed)}
-                          disabled={!switchStates[idx]}>
-                          <Text
-                            className={`p-2 rounded-full ${
-                              fanSpeeds[idx] === speed
-                                ? 'bg-[#84c3e0] text-white'
-                                : 'bg-gray-200 text-gray-800'
-                            }`}>
-                            {speed}
-                          </Text>
-                        </TouchableOpacity>
-                      );
-                    },
-                  )}
-                </View>
+              <View className="items-center">
+                <Animated.View
+                  style={[animatedFanStyles[idx]]}
+                  className="flex justify-center items-center w-32 mb-2">
+                  <FontAwesomeIcon
+                    icon={faFan}
+                    size={50}
+                    color={switchStates[idx] ? '#84c3e0' : '#ccc'}
+                  />
+                </Animated.View>
+                <Slider
+                  style={{width: '100%', height: 40}}
+                  minimumValue={0}
+                  maximumValue={6}
+                  step={1}
+                  value={fanSpeeds[idx]}
+                  onValueChange={value => handleFanSpeedChange(idx, value)}
+                  disabled={!switchStates[idx]}
+                  minimumTrackTintColor="#84c3e0"
+                  maximumTrackTintColor="#ccc"
+                />
               </View>
             ) : (
               <View className="mt-4 items-center">
-                <Animated.View className="flex justify-center items-center">
+                <Animated.View className="flex justify-center items-center mb-3">
                   <FontAwesomeIcon
                     icon={faLightbulb}
                     size={40}
