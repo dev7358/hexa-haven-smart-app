@@ -20,11 +20,15 @@ import Animated, {
 } from 'react-native-reanimated';
 import Slider from '@react-native-community/slider';
 import TimePickerModal from '../components/TimePickerModal';
+import DelayTimerModal from '../components/DelayTimerModal';
 import {
   updateDevice,
   setTimer,
   decrementTimer,
   resetTimer,
+  setMainToggleTimer,
+  decrementMainToggleTimer,
+  resetMainToggleTimer,
 } from '../redux/slices/switchSlice';
 
 export default function HexaDevices() {
@@ -42,6 +46,8 @@ export default function HexaDevices() {
     state => state.switches.timers[selectedDevice?.id] || {},
   );
 
+  const mainToggleTimer = useSelector(state => state.switches.mainToggleTimer);
+
   const [mainToggle, setMainToggle] = useState(false);
   const [switchStates, setSwitchStates] = useState(
     selectedDevice?.switches || [],
@@ -54,6 +60,7 @@ export default function HexaDevices() {
   );
   const [modalVisible, setModalVisible] = useState(false);
   const [selectedSwitchIndex, setSelectedSwitchIndex] = useState(null);
+  const [delayModalVisible, setDelayModalVisible] = useState(false);
 
   const fanRotations = [
     useSharedValue(0),
@@ -70,31 +77,51 @@ export default function HexaDevices() {
     })),
   );
 
-  // Timer countdown logic
+  // Main toggle timer countdown logic
+  useEffect(() => {
+    const interval = setInterval(() => {
+      if (mainToggleTimer > 0) {
+        dispatch(decrementMainToggleTimer());
+      } else if (mainToggleTimer === 0) {
+        handleMainToggleTimerEnd();
+        dispatch(resetMainToggleTimer());
+      }
+    }, 1000);
+
+    return () => clearInterval(interval);
+  }, [mainToggleTimer]);
+
+  // Device-specific timer countdown logic
   useEffect(() => {
     const interval = setInterval(() => {
       Object.keys(timers).forEach(switchIndex => {
         if (timers[switchIndex] > 0) {
           dispatch(decrementTimer({deviceId: selectedDevice.id, switchIndex}));
         } else if (timers[switchIndex] === 0) {
-          // Call handleTimerEnd only once when the timer reaches 0
           handleTimerEnd(Number(switchIndex));
-          dispatch(resetTimer({deviceId: selectedDevice.id, switchIndex})); // Reset the timer in Redux
+          dispatch(resetTimer({deviceId: selectedDevice.id, switchIndex}));
         }
       });
     }, 1000);
 
-    return () => clearInterval(interval); // Cleanup the interval on unmount
-  }, [timers, selectedDevice?.id]); // Add selectedDevice?.id to dependencies
+    return () => clearInterval(interval);
+  }, [timers, selectedDevice?.id]);
+
+  const handleMainToggleTimerEnd = () => {
+    console.log('Main toggle timer ended');
+    setMainToggle(false);
+    const newSwitchStates = switchStates.map(() => false);
+    setSwitchStates(newSwitchStates);
+    setCheckedStates(newSwitchStates.map(() => false));
+    dispatch(updateDevice({id: selectedDevice.id, switches: newSwitchStates}));
+  };
 
   const handleTimerEnd = switchIndex => {
     console.log(`Timer ended for switch ${switchIndex}`);
     const newSwitchStates = [...switchStates];
-    newSwitchStates[switchIndex] = false; // Turn off only the respective toggle
-    console.log(`Updated switch states:`, newSwitchStates);
+    newSwitchStates[switchIndex] = false;
     setSwitchStates(newSwitchStates);
 
-    // If it's a fan, also reset its speed
     if (selectedDevice?.regulators.length > switchIndex) {
       const newFanSpeeds = [...fanSpeeds];
       newFanSpeeds[switchIndex] = 0;
@@ -105,7 +132,6 @@ export default function HexaDevices() {
       });
     }
 
-    // Update the device state in Redux
     dispatch(updateDevice({id: selectedDevice.id, switches: newSwitchStates}));
   };
 
@@ -122,21 +148,23 @@ export default function HexaDevices() {
     setModalVisible(false);
   };
 
-  const handleToggleMain = () => {
-    setMainToggle(prev => !prev); // Toggle the state
+  const handleSelectDelay = delay => {
+    setDelayModalVisible(false);
+    if (delay) {
+      dispatch(setMainToggleTimer(delay));
+      setMainToggle(true);
+    }
   };
 
   const handleToggleSwitch = index => {
     const newSwitchStates = [...switchStates];
-    newSwitchStates[index] = !newSwitchStates[index]; // Toggle the switch state
+    newSwitchStates[index] = !newSwitchStates[index];
     setSwitchStates(newSwitchStates);
 
-    // If the toggle is turned off manually, reset its timer
     if (!newSwitchStates[index]) {
       dispatch(resetTimer({deviceId: selectedDevice.id, switchIndex: index}));
     }
 
-    // If it's a fan, reset its speed when turned off
     if (selectedDevice?.regulators.length > index && !newSwitchStates[index]) {
       const newFanSpeeds = [...fanSpeeds];
       newFanSpeeds[index] = 0;
@@ -147,7 +175,6 @@ export default function HexaDevices() {
       });
     }
 
-    // Update the device state in Redux
     dispatch(updateDevice({id: selectedDevice.id, switches: newSwitchStates}));
   };
 
@@ -197,7 +224,7 @@ export default function HexaDevices() {
           Main Control
         </Text>
         <TouchableOpacity
-          onPress={handleToggleMain}
+          onPress={() => setDelayModalVisible(true)}
           className="p-2 rounded-full bg-gray-100">
           <FontAwesomeIcon
             icon={mainToggle ? faToggleOn : faToggleOff}
@@ -206,6 +233,13 @@ export default function HexaDevices() {
           />
         </TouchableOpacity>
       </View>
+
+      {/* Delay Timer Modal */}
+      <DelayTimerModal
+        visible={delayModalVisible}
+        onClose={() => setDelayModalVisible(false)}
+        onSelectDelay={handleSelectDelay}
+      />
 
       {/* Switch Cards */}
       <View className="flex-row flex-wrap justify-between">
@@ -222,12 +256,12 @@ export default function HexaDevices() {
               <View className="flex-row items-center">
                 <TouchableOpacity
                   onPress={() => handleOpenModal(idx)}
-                  disabled={!switchStates[idx]} // Disable if toggle is off
+                  disabled={!switchStates[idx]}
                   className="mr-2">
                   <FontAwesomeIcon
                     icon={faClock}
                     size={20}
-                    color={switchStates[idx] ? '#4A5568' : '#ccc'} // Gray out if disabled
+                    color={switchStates[idx] ? '#4A5568' : '#ccc'}
                   />
                 </TouchableOpacity>
                 <TouchableOpacity

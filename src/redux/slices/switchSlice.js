@@ -5,6 +5,7 @@ const initialState = {
   cardNames: [], // Array of objects to store card names
   nextDeviceId: 1,
   timers: {}, // Counter for numeric IDs
+  mainToggleTimer: null,
 };
 
 const switchSlice = createSlice({
@@ -71,13 +72,16 @@ const switchSlice = createSlice({
         delete state.timers[deviceId][switchIndex]; // Remove the timer for the switch
       }
     },
-
-    // Reset all timers for a specific device (optional)
-    resetAllTimers: (state, action) => {
-      const {deviceId} = action.payload;
-      if (state.timers[deviceId]) {
-        state.timers[deviceId] = {}; // Reset all timers for the device
+    setMainToggleTimer: (state, action) => {
+      state.mainToggleTimer = action.payload;
+    },
+    decrementMainToggleTimer: state => {
+      if (state.mainToggleTimer > 0) {
+        state.mainToggleTimer -= 1;
       }
+    },
+    resetMainToggleTimer: state => {
+      state.mainToggleTimer = null;
     },
   },
 });
@@ -91,5 +95,8 @@ export const {
   decrementTimer,
   resetTimer,
   resetAllTimers,
+  setMainToggleTimer,
+  decrementMainToggleTimer,
+  resetMainToggleTimer,
 } = switchSlice.actions;
 export default switchSlice.reducer;
