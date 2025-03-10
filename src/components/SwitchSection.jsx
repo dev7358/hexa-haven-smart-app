@@ -1,4 +1,4 @@
-import React, {useState} from 'react';
+import React, {useState, useRef} from 'react';
 import {
   View,
   Text,
@@ -7,6 +7,7 @@ import {
   PermissionsAndroid,
   Platform,
   Alert,
+  ScrollView,
 } from 'react-native';
 import {useDispatch, useSelector} from 'react-redux';
 import {FontAwesomeIcon} from '@fortawesome/react-native-fontawesome';
@@ -15,6 +16,8 @@ import {
   faToggleOn,
   faXmark,
   faToggleOff,
+  faChevronUp,
+  faChevronDown,
 } from '@fortawesome/free-solid-svg-icons';
 import {
   addDevice,
@@ -27,6 +30,7 @@ import Animated, {FadeIn, SlideInRight, ZoomIn} from 'react-native-reanimated';
 import {useNavigation} from '@react-navigation/native';
 import WifiManager from 'react-native-wifi-reborn';
 import {BleManager} from 'react-native-ble-plx';
+
 const bleManager = new BleManager();
 
 export default function SwitchSection() {
@@ -44,11 +48,12 @@ export default function SwitchSection() {
     {
       id: 2,
       type: '5-channel',
-      switches: [false, false, false],
+      switches: [false, false, false, false, false],
       regulators: [0, 0],
     },
   ]);
   const navigation = useNavigation();
+  const scrollViewRefs = useRef({});
 
   const handleAddChannel = () => {
     requestPermissions();
@@ -112,9 +117,6 @@ export default function SwitchSection() {
           granted['android.permission.ACCESS_FINE_LOCATION'] ===
             PermissionsAndroid.RESULTS.GRANTED
         ) {
-          console.log('Bluetooth & Location permissions granted');
-
-          // Check if Bluetooth is ON
           const state = await bleManager.state();
           if (state !== 'PoweredOn') {
             Alert.alert(
@@ -123,8 +125,6 @@ export default function SwitchSection() {
               [{text: 'OK'}],
             );
           }
-        } else {
-          console.log('Permissions denied');
         }
       } catch (error) {
         console.error('Permission error:', error);
@@ -132,9 +132,20 @@ export default function SwitchSection() {
     }
   };
 
+  const scrollUp = deviceId => {
+    if (scrollViewRefs.current[deviceId]) {
+      scrollViewRefs.current[deviceId].scrollTo({y: 0, animated: true});
+    }
+  };
+
+  const scrollDown = deviceId => {
+    if (scrollViewRefs.current[deviceId]) {
+      scrollViewRefs.current[deviceId].scrollToEnd({animated: true});
+    }
+  };
+
   return (
     <View>
-      {/* Add Channel Button */}
       <Animated.View entering={FadeIn.duration(400)}>
         <TouchableOpacity
           className="bg-[#ff8625] p-4 rounded-2xl items-center shadow-xl flex-row justify-center space-x-3"
@@ -145,7 +156,6 @@ export default function SwitchSection() {
         </TouchableOpacity>
       </Animated.View>
 
-      {/* Device Detector Loader */}
       {isRotating && (
         <Animated.View entering={FadeIn} className="mt-8 items-center">
           <Text className="text-lg font-bold text-[#1a365d] mb-4">
@@ -155,12 +165,12 @@ export default function SwitchSection() {
         </Animated.View>
       )}
 
-      {/* Active Devices Grid */}
       {activeDevices.length > 0 && (
         <View className="mt-8">
           <Text className="text-2xl font-bold text-[#1a365d] mb-6">
             Active Devices
           </Text>
+
           <View className="flex flex-wrap flex-row justify-between gap-2">
             {activeDevices.map(device => {
               const cardName = cardNames.find(
@@ -179,15 +189,12 @@ export default function SwitchSection() {
                   className="w-[48%] mb-2">
                   <Animated.View
                     entering={SlideInRight.delay(200)}
-                    className="bg-white rounded-xl shadow-xl pb-3">
-                    {/* X Button to Remove Card */}
+                    className="bg-white rounded-xl shadow-xl h-56">
                     <TouchableOpacity
                       className="absolute -top-2 -right-2 p-1 bg-[#ff8625] rounded-full"
                       onPress={() => handleRemoveDevice(device.id)}>
                       <FontAwesomeIcon icon={faXmark} size={15} color="#fff" />
                     </TouchableOpacity>
-
-                    {/* Editable Card Name */}
                     <TextInput
                       className="font-bold text-xl text-blue-900 mx-3 pt-2"
                       numberOfLines={1}
@@ -196,23 +203,41 @@ export default function SwitchSection() {
                         handleUpdateCardName(device.id, text)
                       }
                     />
-
-                    {/* Switches */}
-                    {device.switches.map((sw, idx) => (
-                      <TouchableOpacity
-                        key={`${device.id}-switch-${idx}`}
-                        className="flex-row items-center mt-2 px-4 pb-2"
-                        onPress={() => handleToggleSwitch(device.id, idx)}>
+                    <ScrollView
+                      ref={ref => (scrollViewRefs.current[device.id] = ref)}
+                      className="mt-2">
+                      {device.switches.map((sw, idx) => (
+                        <TouchableOpacity
+                          key={`${device.id}-switch-${idx}`}
+                          className="flex-row items-center mt-2 px-4 pb-2"
+                          onPress={() => handleToggleSwitch(device.id, idx)}>
+                          <FontAwesomeIcon
+                            icon={sw ? faToggleOn : faToggleOff}
+                            size={24}
+                            color={sw ? '#10B981' : '#ff8625'}
+                          />
+                          <Text className="ml-3 text-blue-900 text-lg">
+                            Switch {idx + 1}
+                          </Text>
+                        </TouchableOpacity>
+                      ))}
+                    </ScrollView>
+                    <View className="flex-row justify-around space-x-4 mt-2 bg-[#ff8625] rounded-t-md rounded-b-xl py-2">
+                      <TouchableOpacity onPress={() => scrollUp(device.id)}>
                         <FontAwesomeIcon
-                          icon={sw ? faToggleOn : faToggleOff}
-                          size={24}
-                          color={sw ? '#10B981' : '#ff8625'}
+                          icon={faChevronUp}
+                          size={20}
+                          color="#ffffff"
                         />
-                        <Text className="ml-3 text-blue-900 text-lg">
-                          Switch {idx + 1}
-                        </Text>
                       </TouchableOpacity>
-                    ))}
+                      <TouchableOpacity onPress={() => scrollDown(device.id)}>
+                        <FontAwesomeIcon
+                          icon={faChevronDown}
+                          size={20}
+                          color="#ffffff"
+                        />
+                      </TouchableOpacity>
+                    </View>
                   </Animated.View>
                 </TouchableOpacity>
               );
@@ -221,7 +246,6 @@ export default function SwitchSection() {
         </View>
       )}
 
-      {/* Manual Switches Section */}
       <View className="my-8">
         <Text className="text-2xl font-bold text-[#1a365d] mb-6">
           Manual Setup

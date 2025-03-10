@@ -10,7 +10,7 @@ import {
 import {FontAwesomeIcon} from '@fortawesome/react-native-fontawesome';
 import {faClock, faTimes} from '@fortawesome/free-solid-svg-icons';
 
-const TimePickerModal = ({visible, onClose, onSchedule}) => {
+export default function TimePickerModal({visible, onClose, onSchedule}) {
   const [hours, setHours] = useState('');
   const [minutes, setMinutes] = useState('');
   const [amPm, setAmPm] = useState('AM');
@@ -54,7 +54,7 @@ const TimePickerModal = ({visible, onClose, onSchedule}) => {
 
     const timeout = scheduledDate.getTime() - now.getTime();
     if (timeout > 0) {
-      onSchedule(Math.floor(timeout / 1000)); // Pass timeout in seconds
+      onSchedule(Math.floor(timeout / 1000));
       onClose();
     } else {
       Alert.alert('Invalid Time', 'The scheduled time must be in the future.');
@@ -110,6 +110,4 @@ const TimePickerModal = ({visible, onClose, onSchedule}) => {
       </View>
     </Modal>
   );
-};
-
-export default TimePickerModal;
+}

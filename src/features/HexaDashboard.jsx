@@ -8,19 +8,18 @@ import {LinearGradient} from 'react-native-linear-gradient';
 export default function HexaDashboard() {
   return (
     <SafeAreaProvider>
-        <LinearGradient
-          colors={['#bedcea', '#ffffff']}
-          start={{ x: 0, y: 0 }}
-          end={{ x: 1, y: 1 }}
-          style={{ flex: 1}}
-        >
-      <SafeAreaView className="flex-1">
-        <GreetingSection />
+      <LinearGradient
+        colors={['#bedcea', '#ffffff']}
+        start={{x: 0, y: 0}}
+        end={{x: 1, y: 1}}
+        style={{flex: 1}}>
+        <SafeAreaView className="flex-1">
+          <GreetingSection />
           <ScrollView className="flex-1 p-6">
             <WeatherSection />
             <SwitchSection />
           </ScrollView>
-      </SafeAreaView>
+        </SafeAreaView>
       </LinearGradient>
     </SafeAreaProvider>
   );

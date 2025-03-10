@@ -78,7 +78,6 @@ export default function Routes() {
         gestureEnabled: true,
         gestureDirection: 'horizontal',
       }}>
-      {/* Create route here */}
       <Stack.Screen
         name="HexaWelcomeScreen"
         component={Components.HexaWelcomeScreen}

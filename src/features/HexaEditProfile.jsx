@@ -40,16 +40,13 @@ export default function HexaEditProfile() {
   const scale = useSharedValue(1);
   const opacity = useSharedValue(0);
 
-  // Animation styles
   const animatedStyle = useAnimatedStyle(() => ({
     transform: [{scale: scale.value}],
   }));
   const fadeInStyle = useAnimatedStyle(() => ({opacity: opacity.value}));
 
-  // Handle text input changes
   const handleChange = (field, value) => {
     if (field === 'phone') {
-      // Ensure +91 is always present at the beginning
       if (!value.startsWith('+91')) {
         value = `+91${value.replace(/^\+91/, '')}`;
       }
@@ -57,13 +54,11 @@ export default function HexaEditProfile() {
     setFormData({...formData, [field]: value});
   };
 
-  // Save changes to Redux
   const handleSave = () => {
     dispatch(updateProfile(formData));
     setIsEditing(false);
   };
 
-  // Handle button press animation
   const handlePress = () => {
     scale.value = withSpring(0.9, {damping: 5, stiffness: 150}, () => {
       scale.value = withSpring(1);
@@ -71,7 +66,6 @@ export default function HexaEditProfile() {
     setIsEditing(prev => !prev);
   };
 
-  // Handle Image Upload
   const handleImageUpload = () => {
     if (!isEditing) return;
 
@@ -100,7 +94,6 @@ export default function HexaEditProfile() {
 
   return (
     <Animated.View className="p-4" style={fadeInStyle}>
-      {/* Profile Picture */}
       <View className="items-center mb-6 relative">
         <TouchableOpacity onPress={handleImageUpload} disabled={!isEditing}>
           <Animated.Image
@@ -119,7 +112,6 @@ export default function HexaEditProfile() {
         </TouchableOpacity>
       </View>
 
-      {/* Profile Fields */}
       <View className="p-4 bg-white rounded-lg shadow-md">
         {[
           {label: 'Name', key: 'name', icon: faUser},
@@ -149,7 +141,6 @@ export default function HexaEditProfile() {
           </View>
         ))}
 
-        {/* Date of Birth Field with Date Picker */}
         <View className="flex-row items-center gap-x-4 mb-4 border-b pb-2 border-gray-200">
           <FontAwesomeIcon icon={faCalendar} size={18} color="#4A90E2" />
           <View className="flex-1">
@@ -171,7 +162,6 @@ export default function HexaEditProfile() {
           </View>
         </View>
 
-        {/* New Password Field */}
         {isEditing && (
           <View className="flex-row items-center gap-x-4 mb-4 border-b pb-2 border-gray-200">
             <FontAwesomeIcon icon={faLock} size={18} color="#4A90E2" />
@@ -189,7 +179,6 @@ export default function HexaEditProfile() {
           </View>
         )}
 
-        {/* Confirm Password Field */}
         {isEditing && (
           <View className="flex-row items-center gap-x-4 mb-4 border-b pb-2 border-gray-200">
             <FontAwesomeIcon icon={faLock} size={18} color="#4A90E2" />
@@ -210,7 +199,6 @@ export default function HexaEditProfile() {
         )}
       </View>
 
-      {/* Date Picker Modal */}
       <DatePicker
         modal
         open={dobPickerVisible}
@@ -223,7 +211,6 @@ export default function HexaEditProfile() {
         onCancel={() => setDobPickerVisible(false)}
       />
 
-      {/* Edit / Save Button */}
       <TouchableOpacity
         className="mt-6 bg-blue-500 py-3 rounded-lg flex-row items-center justify-center shadow-md"
         onPress={isEditing ? handleSave : handlePress}>

@@ -1,4 +1,3 @@
-// src/components/WelcomeScreen.js
 import React, {useEffect} from 'react';
 import {
   View,
@@ -12,7 +11,7 @@ import LinearGradient from 'react-native-linear-gradient';
 import {useDispatch, useSelector} from 'react-redux';
 import {clearUser} from '../redux/slices/authSlice';
 
-const WelcomeScreen = ({navigation}) => {
+export default function WelcomeScreen({navigation}) {
   const dispatch = useDispatch();
   const user = useSelector(state => state.auth.user);
   const fadeAnim = new Animated.Value(0);
@@ -46,11 +45,11 @@ const WelcomeScreen = ({navigation}) => {
       <Animated.View
         style={{opacity: fadeAnim, transform: [{translateY: slideAnim}]}}>
         <Image
-          source={require('../assets/images/welcome-bg.jpg')}
-          className="w-64 h-64 mb-8"
+          source={require('../assets/images/hexa-haven-logo.png')}
+          className="mb-8"
         />
         <Text className="text-3xl font-bold mb-2 text-white">
-          Welcome, {user?.fullName || user?.email}!
+          Welcome, {user?.fullName}!
         </Text>
         <Text className="text-lg text-white mb-8 text-center">
           We're glad to have you here. Start exploring and make the most out of
@@ -64,6 +63,4 @@ const WelcomeScreen = ({navigation}) => {
       </Animated.View>
     </LinearGradient>
   );
-};
-
-export default WelcomeScreen;
+}

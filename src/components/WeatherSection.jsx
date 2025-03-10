@@ -26,11 +26,9 @@ export function WeatherSection() {
       );
 
       if (granted === PermissionsAndroid.RESULTS.GRANTED) {
-        console.log('Location permission granted');
         setPermissionGranted(true);
         getCurrentLocation();
       } else {
-        console.log('Location permission denied');
         setPermissionGranted(false);
       }
     } catch (err) {
@@ -59,7 +57,6 @@ export function WeatherSection() {
       setWeatherData(response.data);
       setLoading(false);
     } catch (error) {
-      console.error('Error fetching weather data:', error);
       setLoading(false);
     }
   };
