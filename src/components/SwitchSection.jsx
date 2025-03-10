@@ -1,4 +1,4 @@
-import React, {useState} from 'react';
+import React, {useState, useRef} from 'react';
 import {
   View,
   Text,
@@ -7,6 +7,7 @@ import {
   PermissionsAndroid,
   Platform,
   Alert,
+  ScrollView,
 } from 'react-native';
 import {useDispatch, useSelector} from 'react-redux';
 import {FontAwesomeIcon} from '@fortawesome/react-native-fontawesome';
@@ -15,6 +16,8 @@ import {
   faToggleOn,
   faXmark,
   faToggleOff,
+  faChevronUp,
+  faChevronDown,
 } from '@fortawesome/free-solid-svg-icons';
 import {
   addDevice,
@@ -27,6 +30,7 @@ import Animated, {FadeIn, SlideInRight, ZoomIn} from 'react-native-reanimated';
 import {useNavigation} from '@react-navigation/native';
 import WifiManager from 'react-native-wifi-reborn';
 import {BleManager} from 'react-native-ble-plx';
+
 const bleManager = new BleManager();
 
 export default function SwitchSection() {
@@ -44,11 +48,12 @@ export default function SwitchSection() {
     {
       id: 2,
       type: '5-channel',
-      switches: [false, false, false],
+      switches: [false, false, false, false, false],
       regulators: [0, 0],
     },
   ]);
   const navigation = useNavigation();
+  const scrollViewRefs = useRef({}); // Refs for each ScrollView
 
   const handleAddChannel = () => {
     requestPermissions();
@@ -132,6 +137,20 @@ export default function SwitchSection() {
     }
   };
 
+  // Function to scroll up
+  const scrollUp = deviceId => {
+    if (scrollViewRefs.current[deviceId]) {
+      scrollViewRefs.current[deviceId].scrollTo({y: 0, animated: true});
+    }
+  };
+
+  // Function to scroll down
+  const scrollDown = deviceId => {
+    if (scrollViewRefs.current[deviceId]) {
+      scrollViewRefs.current[deviceId].scrollToEnd({animated: true});
+    }
+  };
+
   return (
     <View>
       {/* Add Channel Button */}
@@ -161,6 +180,7 @@ export default function SwitchSection() {
           <Text className="text-2xl font-bold text-[#1a365d] mb-6">
             Active Devices
           </Text>
+
           <View className="flex flex-wrap flex-row justify-between gap-2">
             {activeDevices.map(device => {
               const cardName = cardNames.find(
@@ -179,14 +199,14 @@ export default function SwitchSection() {
                   className="w-[48%] mb-2">
                   <Animated.View
                     entering={SlideInRight.delay(200)}
-                    className="bg-white rounded-xl shadow-xl pb-3">
+                    className="bg-white rounded-xl shadow-xl h-56">
+                    {/* Fixed height */}
                     {/* X Button to Remove Card */}
                     <TouchableOpacity
                       className="absolute -top-2 -right-2 p-1 bg-[#ff8625] rounded-full"
                       onPress={() => handleRemoveDevice(device.id)}>
                       <FontAwesomeIcon icon={faXmark} size={15} color="#fff" />
                     </TouchableOpacity>
-
                     {/* Editable Card Name */}
                     <TextInput
                       className="font-bold text-xl text-blue-900 mx-3 pt-2"
@@ -196,23 +216,43 @@ export default function SwitchSection() {
                         handleUpdateCardName(device.id, text)
                       }
                     />
-
-                    {/* Switches */}
-                    {device.switches.map((sw, idx) => (
-                      <TouchableOpacity
-                        key={`${device.id}-switch-${idx}`}
-                        className="flex-row items-center mt-2 px-4 pb-2"
-                        onPress={() => handleToggleSwitch(device.id, idx)}>
+                    {/* Scrollable Switches */}
+                    <ScrollView
+                      ref={ref => (scrollViewRefs.current[device.id] = ref)}
+                      className="mt-2">
+                      {device.switches.map((sw, idx) => (
+                        <TouchableOpacity
+                          key={`${device.id}-switch-${idx}`}
+                          className="flex-row items-center mt-2 px-4 pb-2"
+                          onPress={() => handleToggleSwitch(device.id, idx)}>
+                          <FontAwesomeIcon
+                            icon={sw ? faToggleOn : faToggleOff}
+                            size={24}
+                            color={sw ? '#10B981' : '#ff8625'}
+                          />
+                          <Text className="ml-3 text-blue-900 text-lg">
+                            Switch {idx + 1}
+                          </Text>
+                        </TouchableOpacity>
+                      ))}
+                    </ScrollView>
+                    {/* Scroll Arrows */}
+                    <View className="flex-row justify-around space-x-4 mt-2 bg-[#ff8625] rounded-t-md rounded-b-xl py-2">
+                      <TouchableOpacity onPress={() => scrollUp(device.id)}>
                         <FontAwesomeIcon
-                          icon={sw ? faToggleOn : faToggleOff}
-                          size={24}
-                          color={sw ? '#10B981' : '#ff8625'}
+                          icon={faChevronUp}
+                          size={20}
+                          color="#ffffff"
                         />
-                        <Text className="ml-3 text-blue-900 text-lg">
-                          Switch {idx + 1}
-                        </Text>
                       </TouchableOpacity>
-                    ))}
+                      <TouchableOpacity onPress={() => scrollDown(device.id)}>
+                        <FontAwesomeIcon
+                          icon={faChevronDown}
+                          size={20}
+                          color="#ffffff"
+                        />
+                      </TouchableOpacity>
+                    </View>
                   </Animated.View>
                 </TouchableOpacity>
               );

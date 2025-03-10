@@ -109,10 +109,34 @@ export default function HexaDevices() {
 
   const handleMainToggleTimerEnd = () => {
     console.log('Main toggle timer ended');
-    setMainToggle(false);
-    const newSwitchStates = switchStates.map(() => false);
+
+    // Create a new array for switch states and checkbox states
+    const newSwitchStates = [...switchStates];
+    const newCheckedStates = [...checkedStates];
+
+    // Iterate through the checked states
+    checkedStates.forEach((isChecked, index) => {
+      if (isChecked) {
+        // If the checkbox is checked, toggle the switch off and uncheck the checkbox
+        newSwitchStates[index] = false;
+        newCheckedStates[index] = false;
+
+        // If it's a fan, reset the fan speed and rotation
+        if (selectedDevice?.regulators.length > index) {
+          const newFanSpeeds = [...fanSpeeds];
+          newFanSpeeds[index] = 0;
+          setFanSpeeds(newFanSpeeds);
+          fanRotations[index].value = withTiming(0, {
+            duration: 500,
+            easing: Easing.linear,
+          });
+        }
+      }
+    });
+
+    // Update the states and Redux store
     setSwitchStates(newSwitchStates);
-    setCheckedStates(newSwitchStates.map(() => false));
+    setCheckedStates(newCheckedStates);
     dispatch(updateDevice({id: selectedDevice.id, switches: newSwitchStates}));
   };
 
