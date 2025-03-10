@@ -53,7 +53,7 @@ export default function SwitchSection() {
     },
   ]);
   const navigation = useNavigation();
-  const scrollViewRefs = useRef({}); // Refs for each ScrollView
+  const scrollViewRefs = useRef({});
 
   const handleAddChannel = () => {
     requestPermissions();
@@ -117,9 +117,6 @@ export default function SwitchSection() {
           granted['android.permission.ACCESS_FINE_LOCATION'] ===
             PermissionsAndroid.RESULTS.GRANTED
         ) {
-          console.log('Bluetooth & Location permissions granted');
-
-          // Check if Bluetooth is ON
           const state = await bleManager.state();
           if (state !== 'PoweredOn') {
             Alert.alert(
@@ -128,8 +125,6 @@ export default function SwitchSection() {
               [{text: 'OK'}],
             );
           }
-        } else {
-          console.log('Permissions denied');
         }
       } catch (error) {
         console.error('Permission error:', error);
@@ -137,14 +132,12 @@ export default function SwitchSection() {
     }
   };
 
-  // Function to scroll up
   const scrollUp = deviceId => {
     if (scrollViewRefs.current[deviceId]) {
       scrollViewRefs.current[deviceId].scrollTo({y: 0, animated: true});
     }
   };
 
-  // Function to scroll down
   const scrollDown = deviceId => {
     if (scrollViewRefs.current[deviceId]) {
       scrollViewRefs.current[deviceId].scrollToEnd({animated: true});
@@ -153,7 +146,6 @@ export default function SwitchSection() {
 
   return (
     <View>
-      {/* Add Channel Button */}
       <Animated.View entering={FadeIn.duration(400)}>
         <TouchableOpacity
           className="bg-[#ff8625] p-4 rounded-2xl items-center shadow-xl flex-row justify-center space-x-3"
@@ -164,7 +156,6 @@ export default function SwitchSection() {
         </TouchableOpacity>
       </Animated.View>
 
-      {/* Device Detector Loader */}
       {isRotating && (
         <Animated.View entering={FadeIn} className="mt-8 items-center">
           <Text className="text-lg font-bold text-[#1a365d] mb-4">
@@ -174,7 +165,6 @@ export default function SwitchSection() {
         </Animated.View>
       )}
 
-      {/* Active Devices Grid */}
       {activeDevices.length > 0 && (
         <View className="mt-8">
           <Text className="text-2xl font-bold text-[#1a365d] mb-6">
@@ -200,14 +190,11 @@ export default function SwitchSection() {
                   <Animated.View
                     entering={SlideInRight.delay(200)}
                     className="bg-white rounded-xl shadow-xl h-56">
-                    {/* Fixed height */}
-                    {/* X Button to Remove Card */}
                     <TouchableOpacity
                       className="absolute -top-2 -right-2 p-1 bg-[#ff8625] rounded-full"
                       onPress={() => handleRemoveDevice(device.id)}>
                       <FontAwesomeIcon icon={faXmark} size={15} color="#fff" />
                     </TouchableOpacity>
-                    {/* Editable Card Name */}
                     <TextInput
                       className="font-bold text-xl text-blue-900 mx-3 pt-2"
                       numberOfLines={1}
@@ -216,7 +203,6 @@ export default function SwitchSection() {
                         handleUpdateCardName(device.id, text)
                       }
                     />
-                    {/* Scrollable Switches */}
                     <ScrollView
                       ref={ref => (scrollViewRefs.current[device.id] = ref)}
                       className="mt-2">
@@ -236,7 +222,6 @@ export default function SwitchSection() {
                         </TouchableOpacity>
                       ))}
                     </ScrollView>
-                    {/* Scroll Arrows */}
                     <View className="flex-row justify-around space-x-4 mt-2 bg-[#ff8625] rounded-t-md rounded-b-xl py-2">
                       <TouchableOpacity onPress={() => scrollUp(device.id)}>
                         <FontAwesomeIcon
@@ -261,7 +246,6 @@ export default function SwitchSection() {
         </View>
       )}
 
-      {/* Manual Switches Section */}
       <View className="my-8">
         <Text className="text-2xl font-bold text-[#1a365d] mb-6">
           Manual Setup

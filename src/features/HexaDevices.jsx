@@ -77,7 +77,6 @@ export default function HexaDevices() {
     })),
   );
 
-  // Main toggle timer countdown logic
   useEffect(() => {
     const interval = setInterval(() => {
       if (mainToggleTimer > 0) {
@@ -91,7 +90,6 @@ export default function HexaDevices() {
     return () => clearInterval(interval);
   }, [mainToggleTimer]);
 
-  // Device-specific timer countdown logic
   useEffect(() => {
     const interval = setInterval(() => {
       Object.keys(timers).forEach(switchIndex => {
@@ -108,20 +106,13 @@ export default function HexaDevices() {
   }, [timers, selectedDevice?.id]);
 
   const handleMainToggleTimerEnd = () => {
-    console.log('Main toggle timer ended');
-
-    // Create a new array for switch states and checkbox states
+    setMainToggle(false);
     const newSwitchStates = [...switchStates];
     const newCheckedStates = [...checkedStates];
-
-    // Iterate through the checked states
     checkedStates.forEach((isChecked, index) => {
       if (isChecked) {
-        // If the checkbox is checked, toggle the switch off and uncheck the checkbox
         newSwitchStates[index] = false;
         newCheckedStates[index] = false;
-
-        // If it's a fan, reset the fan speed and rotation
         if (selectedDevice?.regulators.length > index) {
           const newFanSpeeds = [...fanSpeeds];
           newFanSpeeds[index] = 0;
@@ -134,14 +125,12 @@ export default function HexaDevices() {
       }
     });
 
-    // Update the states and Redux store
     setSwitchStates(newSwitchStates);
     setCheckedStates(newCheckedStates);
     dispatch(updateDevice({id: selectedDevice.id, switches: newSwitchStates}));
   };
 
   const handleTimerEnd = switchIndex => {
-    console.log(`Timer ended for switch ${switchIndex}`);
     const newSwitchStates = [...switchStates];
     newSwitchStates[switchIndex] = false;
     setSwitchStates(newSwitchStates);
@@ -242,7 +231,6 @@ export default function HexaDevices() {
 
   return (
     <ScrollView className="flex-1 p-4 mb-2">
-      {/* Main Toggle */}
       <View className="flex-row justify-between items-center bg-white p-4 rounded-xl shadow-sm mb-4">
         <Text className="text-lg font-semibold text-gray-800">
           Main Control
@@ -258,14 +246,12 @@ export default function HexaDevices() {
         </TouchableOpacity>
       </View>
 
-      {/* Delay Timer Modal */}
       <DelayTimerModal
         visible={delayModalVisible}
         onClose={() => setDelayModalVisible(false)}
         onSelectDelay={handleSelectDelay}
       />
 
-      {/* Switch Cards */}
       <View className="flex-row flex-wrap justify-between">
         {selectedDevice?.switches.map((sw, idx) => (
           <View
@@ -311,7 +297,6 @@ export default function HexaDevices() {
               />
             </TouchableOpacity>
 
-            {/* Fan or Light Icon */}
             {selectedDevice?.regulators.length > idx ? (
               <View className="items-center">
                 <Animated.View
@@ -347,7 +332,6 @@ export default function HexaDevices() {
               </View>
             )}
 
-            {/* Timer Display */}
             {timers[idx] > 0 && (
               <View className="mt-4 items-center">
                 <Text className="text-gray-800">Time Left:</Text>
@@ -360,7 +344,6 @@ export default function HexaDevices() {
         ))}
       </View>
 
-      {/* Time Picker Modal */}
       <TimePickerModal
         visible={modalVisible}
         onClose={handleCloseModal}

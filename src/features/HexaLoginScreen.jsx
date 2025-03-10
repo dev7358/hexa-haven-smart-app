@@ -1,4 +1,3 @@
-// src/components/LoginScreen.js
 import React from 'react';
 import {View, Text, TextInput, TouchableOpacity, Alert} from 'react-native';
 import LinearGradient from 'react-native-linear-gradient';
@@ -14,11 +13,10 @@ const LoginSchema = Yup.object().shape({
   password: Yup.string().required('Required'),
 });
 
-const LoginScreen = ({navigation}) => {
+export default function LoginScreen({navigation}) {
   const dispatch = useDispatch();
 
   const handleLogin = values => {
-    // Simulate login
     dispatch(setUser({email: values.email}));
     navigation.navigate('HexaDashboard');
   };
@@ -96,7 +94,7 @@ const LoginScreen = ({navigation}) => {
               </Text>
             </TouchableOpacity>
             <Text className="mt-6 text-center text-white">
-              Don't have an account?{' '}
+              Don't have an account?
               <Text
                 className="text-white font-semibold"
                 onPress={() => navigation.navigate('HexaSignUpScreen')}>
@@ -108,6 +106,4 @@ const LoginScreen = ({navigation}) => {
       </Formik>
     </LinearGradient>
   );
-};
-
-export default LoginScreen;
+}

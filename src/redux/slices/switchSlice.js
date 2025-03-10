@@ -1,10 +1,10 @@
 import {createSlice} from '@reduxjs/toolkit';
 
 const initialState = {
-  activeDevices: [], // Cards with switches
-  cardNames: [], // Array of objects to store card names
+  activeDevices: [],
+  cardNames: [],
   nextDeviceId: 1,
-  timers: {}, // Counter for numeric IDs
+  timers: {},
   mainToggleTimer: null,
 };
 
@@ -15,22 +15,20 @@ const switchSlice = createSlice({
     addDevice: (state, action) => {
       const newDevice = {
         ...action.payload,
-        id: state.nextDeviceId, // Assign the next numeric ID
+        id: state.nextDeviceId,
       };
       state.activeDevices.push(newDevice);
-      // Add a default name for the card
       state.cardNames.push({
         id: state.nextDeviceId,
         name: `Smart Switch ${state.nextDeviceId}`,
       });
-      state.nextDeviceId += 1; // Increment the counter
+      state.nextDeviceId += 1;
     },
     removeDevice: (state, action) => {
       const deviceId = action.payload;
       state.activeDevices = state.activeDevices.filter(
         device => device.id !== deviceId,
       );
-      // Remove the corresponding card name
       state.cardNames = state.cardNames.filter(card => card.id !== deviceId);
     },
     updateDevice: (state, action) => {
@@ -50,26 +48,22 @@ const switchSlice = createSlice({
     },
     setTimer: (state, action) => {
       const {deviceId, switchIndex, timeLeft} = action.payload;
-      if (!state.timers[deviceId]) state.timers[deviceId] = {}; // Initialize timers for the device if not already present
-      state.timers[deviceId][switchIndex] = timeLeft; // Set the timer for the specific switch
+      if (!state.timers[deviceId]) state.timers[deviceId] = {};
+      state.timers[deviceId][switchIndex] = timeLeft;
     },
-
-    // Decrement the timer for a specific switch of a device
     decrementTimer: (state, action) => {
       const {deviceId, switchIndex} = action.payload;
       if (state.timers[deviceId] && state.timers[deviceId][switchIndex] > 0) {
-        state.timers[deviceId][switchIndex] -= 1; // Decrement the timer
+        state.timers[deviceId][switchIndex] -= 1;
       }
     },
-
-    // Reset the timer for a specific switch of a device
     resetTimer: (state, action) => {
       const {deviceId, switchIndex} = action.payload;
       if (
         state.timers[deviceId] &&
         state.timers[deviceId][switchIndex] !== undefined
       ) {
-        delete state.timers[deviceId][switchIndex]; // Remove the timer for the switch
+        delete state.timers[deviceId][switchIndex];
       }
     },
     setMainToggleTimer: (state, action) => {

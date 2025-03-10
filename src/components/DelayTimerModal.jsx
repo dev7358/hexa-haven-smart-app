@@ -2,12 +2,13 @@ import React, {useState} from 'react';
 import {View, Text, TouchableOpacity, Modal} from 'react-native';
 import {Picker} from '@react-native-picker/picker';
 
-const DelayTimerModal = ({visible, onClose, onSelectDelay}) => {
+export default function DelayTimerModal({visible, onClose, onSelectDelay}) {
   const [selectedDelay, setSelectedDelay] = useState(30);
 
   const delays = [
     {label: '30 Seconds', value: 30},
-    {label: '1 Minute', value: 60},
+    {label: '60 Seconds', value: 60},
+    {label: '90 Seconds', value: 90},
   ];
 
   return (
@@ -42,7 +43,7 @@ const DelayTimerModal = ({visible, onClose, onSelectDelay}) => {
             </TouchableOpacity>
             <TouchableOpacity
               onPress={() => onSelectDelay(selectedDelay)}
-              className="flex-1 bg-blue-500 py-3 rounded-xl items-center">
+              className="flex-1 bg-[#84c3e0] py-3 rounded-xl items-center">
               <Text className="text-base font-bold text-white">Start</Text>
             </TouchableOpacity>
           </View>
@@ -50,6 +51,4 @@ const DelayTimerModal = ({visible, onClose, onSelectDelay}) => {
       </View>
     </Modal>
   );
-};
-
-export default DelayTimerModal;
+}
