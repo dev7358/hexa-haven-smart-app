@@ -1,10 +1,5 @@
 import React, {useState, useEffect} from 'react';
-import {
-  View,
-  Text,
-  Button,
-  PermissionsAndroid,
-} from 'react-native';
+import {View, Text, Button, PermissionsAndroid} from 'react-native';
 import Geolocation from '@react-native-community/geolocation';
 import {FontAwesomeIcon} from '@fortawesome/react-native-fontawesome';
 import {faThermometerHalf, faTint} from '@fortawesome/free-solid-svg-icons';
@@ -31,11 +26,9 @@ export function WeatherSection() {
       );
 
       if (granted === PermissionsAndroid.RESULTS.GRANTED) {
-        console.log('Location permission granted');
         setPermissionGranted(true);
         getCurrentLocation();
       } else {
-        console.log('Location permission denied');
         setPermissionGranted(false);
       }
     } catch (err) {
@@ -64,7 +57,6 @@ export function WeatherSection() {
       setWeatherData(response.data);
       setLoading(false);
     } catch (error) {
-      console.error('Error fetching weather data:', error);
       setLoading(false);
     }
   };
@@ -77,7 +69,9 @@ export function WeatherSection() {
 
   return (
     <View
-      className={`flex-row bg-white rounded-2xl p-6 mb-8 ${!permissionGranted ? 'justify-center' : 'justify-between'}`}
+      className={`flex-row bg-white rounded-2xl p-6 mb-8 ${
+        !permissionGranted ? 'justify-center' : 'justify-between'
+      }`}
       style={{
         shadowColor: '#000',
         shadowOffset: {width: 0, height: 1},
@@ -85,10 +79,10 @@ export function WeatherSection() {
         shadowRadius: 3,
       }}>
       {!permissionGranted ? (
-        <Button title="Allow Permission"  onPress={requestLocationPermission} />
+        <Button title="Allow Permission" onPress={requestLocationPermission} />
       ) : loading ? (
         <>
-        <View className="flex flex-row justify-between bg-[--transition-hexa-blue] rounded-2xl p-6 w-full">
+          <View className="flex flex-row justify-between bg-[--transition-hexa-blue] rounded-2xl p-6 w-full">
             <View className="flex-row items-center gap-2 space-x-2">
               <View className="bg-[--hexa-blue] w-6 h-6 rounded-full" />
               <View className="bg-[--hexa-blue] w-20 h-6 rounded-md" />
@@ -108,7 +102,7 @@ export function WeatherSection() {
               color="#ff8625"
             />
             <View>
-              <Text className="text-xs">Temperature</Text>
+              <Text className="text-xs text-slate-900">Temperature</Text>
               <Text className="text-gray-800 text-lg font-semibold">
                 {weatherData.main.temp}°C
               </Text>
@@ -118,7 +112,7 @@ export function WeatherSection() {
           <View className="flex-row items-center gap-2 space-x-2">
             <FontAwesomeIcon icon={faTint} size={25} color="#84c3e0" />
             <View>
-              <Text className="text-xs">Humidity</Text>
+              <Text className="text-xs text-slate-900">Humidity</Text>
               <Text className="text-gray-800 text-lg font-semibold">
                 {weatherData.main.humidity}%
               </Text>
